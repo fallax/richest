@@ -20,3 +20,22 @@ Piece tables are used by AbiWord. http://e98cuenc.free.fr/wordprocessor/piecetab
 Piece tables are also used by NeatPad. http://www.catch22.net/tuts/piece-chains
 
 Piece tables can either be backed with a binary tree (AbiWord example describes red-black tree) or a linked list.
+
+## Viewports
+
+Some quick notes on viewports:
+
+Viewports have:
+
+- dimensions on the actual screen
+- a position on the virtual document
+- a scale factor on the virtual document
+- a position on the buffer that this corresponds to (may not be 0, 0 to allow smoother scrolling)
+- whether the buffer needs redrawing or not
+
+a useful set of things to be able to get, from the point of view of code trying to draw something:
+
+- is the buffer dirty?
+- what's the bounds of the area in the virtual document?
+- what's the matrix transform I need to use when drawing to shift coordinates from the virtual space to the buffer?
+
