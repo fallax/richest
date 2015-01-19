@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Viz</title>
+  	<script src="periodic.js"></script>
+	<script src="lib/coffee-script.js"></script>
+	<script src="lib/jquery-2.1.1.min.js"></script>
+	<script type="text/coffeescript" src="canvas.coffee"></script>
+  <script type="text/literate-coffeescript" src="viewport.litcoffee"></script>
+  <script type="text/coffeescript">
+  	
+    # sane version of mod (JS one is NOT nice...)
+    Number::mod = (n) -> ((this % n) + n) % n
+
+    redraw = (bounds) ->
+      gap = 50
+
+      startX = Math.floor(bounds[0]/50) * 50
+      startY = Math.floor(bounds[1]/50) * 50
+      for x in [startX..bounds[2]] by gap
+        for y in [startY..bounds[3]] by gap
+          odd = (((x/50 + y/50).mod 2) is 0)
+          canvasContext.fillStyle = if odd then "white" else "black"
+          canvasContext.fillRect x, y, 50, 50
+          canvasContext.fillStyle = "red"
+          canvasContext.fillText "" + x + "," + y, x + 10, y + 10
+
+    view = viewport()
+
+    window.animate = () ->
+      blankCanvas()
+      transformContext view, canvasContext
+      redraw getBounds view
+
+    dragStart = [0, 0]
+    last = [0, 0]
+    dragging = false
+
+    $ () ->
+
+      console.log "loaded"
+
+      makeCanvas()
+      blankCanvas()
+
+      animate()
+
+      window.setInterval "animate();", 20
+
+      $(document).on "mousedown mouseup mousemove", (e) ->
+        switch e.type
+          when "mousemove"
+            if dragging
+              pos = getPos(view, e.pageX, e.pageY)
+              if (last[0] isnt pos[0]) or (last[1] isnt pos[1])
+                view.camX += last[0] - pos[0]
+                view.camY += last[1] - pos[1]
+                last = getPos(view, e.pageX, e.pageY)
+          when "mousedown"
+            last = getPos(view, e.pageX, e.pageY)
+            dragging = true
+          when "mouseup"
+            dragging = false
+
+  </script>
+</head>
+<body>
+</body>
+</html>
