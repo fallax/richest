@@ -10,6 +10,9 @@
   <script type="text/literate-coffeescript" src="viewport.litcoffee"></script>
   <script type="text/coffeescript">
   	
+    window.startTime = 0
+    window.renderTime = 0
+
     # sane version of mod (JS one is NOT nice...)
     Number::mod = (n) -> ((this % n) + n) % n
 
@@ -31,9 +34,15 @@
     window.animate = () ->
       blankCanvas()
       transformContext view, canvasContext
+      renderStart = (new Date()).getTime()
       redraw getBounds view
+      renderTime += (new Date()).getTime() - renderStart
+      now = (new Date()).getTime()
+      canvasContext.setTransform 1, 0, 0, 1, 0, 0
+      canvasContext.fillStyle = "black"
+      elapsed = (now - window.startTime) 
+      canvasContext.fillText "Elapsed: " + elapsed + " Rendering: " + renderTime + " (" + (renderTime * 100 / elapsed).toFixed(1) + "%)", 20, 20
 
-    dragStart = [0, 0]
     last = [0, 0]
     dragging = false
 
@@ -43,6 +52,8 @@
 
       makeCanvas()
       blankCanvas()
+
+      window.startTime = (new Date()).getTime()
 
       animate()
 
