@@ -16,7 +16,7 @@
     # sane version of mod (JS one is NOT nice...)
     Number::mod = (n) -> ((this % n) + n) % n
 
-    redraw = (bounds) ->
+    redraw = (bounds, context) ->
       gap = 50
 
       startX = Math.floor(bounds[0]/50) * 50
@@ -24,24 +24,44 @@
       for x in [startX..bounds[2]] by gap
         for y in [startY..bounds[3]] by gap
           odd = (((x/50 + y/50).mod 2) is 0)
-          canvasContext.fillStyle = if odd then "white" else "AliceBlue"
-          canvasContext.fillRect x, y, 50, 50
-          canvasContext.fillStyle = "CornflowerBlue"
-          canvasContext.fillText "" + x + "," + y, x + 5, y + 28
+          context.fillStyle = if odd then "white" else "AliceBlue"
+          context.fillRect x, y, 50, 50
+          context.fillStyle = "CornflowerBlue"
+          context.fillText "" + x + "," + y, x + 5, y + 28
 
     view = viewport()
 
     window.animate = () ->
-      blankCanvas()
-      transformContext view, canvasContext
+
       renderStart = (new Date()).getTime()
-      redraw getBounds view
+
+      if view.camX < view.bufferX or (view.camX + view.sizeX) > (view.bufferX + view.bufferSizeX) or view.camY < view.bufferY or (view.camY + view.sizeY) > (view.bufferY + view.bufferSizeY)
+        view.bufferX = view.camX - 200; 
+        view.bufferY = view.camY - 200;
+        view.bufferdirty = true
+
+      if view.bufferdirty
+        blankCanvas(view.buffercontext)
+        transformContext view, view.buffercontext
+        console.log "redrawing:"
+        console.log (getBounds view)
+        redraw (getBounds view), view.buffercontext
+        view.bufferdirty = false
+      
+      if view.dirty
+        blankCanvas(canvasContext)
+        canvasContext.drawImage view.buffer, view.camX - view.bufferX, view.camY - view.bufferY, view.sizeX, view.sizeY, 0, 0, view.sizeX, view.sizeY
+
+        now = (new Date()).getTime()
+        canvasContext.setTransform 1, 0, 0, 1, 0, 0
+        canvasContext.fillStyle = "black"
+        elapsed = (now - window.startTime) 
+        canvasContext.fillText "Camera: " + view.camX + ", " + view.camY + " Buffer: " + view.bufferX + ", " + view.bufferY + " to " + (view.bufferX+view.bufferSizeX) + ", " + (view.bufferY+view.bufferSizeY) +  "Elapsed: " + elapsed + " Rendering: " + renderTime + " (" + (renderTime * 100 / elapsed).toFixed(1) + "%)", 20, 20
+
+        view.dirty = false
+
       renderTime += (new Date()).getTime() - renderStart
-      now = (new Date()).getTime()
-      canvasContext.setTransform 1, 0, 0, 1, 0, 0
-      canvasContext.fillStyle = "black"
-      elapsed = (now - window.startTime) 
-      canvasContext.fillText "Elapsed: " + elapsed + " Rendering: " + renderTime + " (" + (renderTime * 100 / elapsed).toFixed(1) + "%)", 20, 20
+
 
     last = [0, 0]
     dragging = false
@@ -52,6 +72,11 @@
 
       makeCanvas()
       blankCanvas()
+
+      view.buffer = document.createElement 'canvas'
+      view.buffer.width = 1000
+      view.buffer.height = 1000
+      view.buffercontext = view.buffer.getContext("2d")
 
       window.startTime = (new Date()).getTime()
 
@@ -68,11 +93,13 @@
                 view.camX += last[0] - pos[0]
                 view.camY += last[1] - pos[1]
                 last = getPos(view, e.pageX, e.pageY)
+                view.dirty = true
           when "mousedown"
             last = getPos(view, e.pageX, e.pageY)
             dragging = true
           when "mouseup"
             dragging = false
+            view.dirty = true
 
   </script>
 </head>
