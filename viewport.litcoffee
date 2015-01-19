@@ -27,24 +27,36 @@ We need a way of working out what position on the virtual canvas corresponds to 
 			viewport.camY + (y / viewport.scaleY)
 		]
 
+We need a way of working out what position on the virtual canvas corresponds to a position on the buffer.
+
+	window.getBufferPos = (viewport, x, y) ->
+		[ 
+			viewport.bufferX + (x / viewport.scaleX), 
+			viewport.bufferY + (y / viewport.scaleY)
+		]
+
 We need a way of working out the bounds of the buffer on the virtual canvas.
 
 	window.getBufferBounds = (viewport) ->
+		topLeft = getBufferPos(viewport, 0, 0)
+		bottomRight = getBufferPos(viewport, viewport.bufferSizeX, viewport.bufferSizeY)
 		[
-			viewport.bufferX, 
-			viewport.bufferY, 
-			viewport.bufferX + (viewport.bufferSizeX / viewport.scaleX), 
-			viewport.bufferY + (viewport.bufferSizeY / viewport.scaleY)
+			topLeft[0],
+			topLeft[1], 
+			bottomRight[0], 
+			bottomRight[1]
 		]
 
 And a way of working out the bounds of the region visible through the viewport on the virtual canvas.
 
 	window.getCameraBounds = (viewport) ->
+		topLeft = getPos(viewport, 0, 0)
+		bottomRight = getPos(viewport, viewport.sizeX, viewport.sizeY)
 		[
-			viewport.camX, 
-			viewport.camY, 
-			viewport.camX + (viewport.sizeX / viewport.scaleX), 
-			viewport.camY + (viewport.sizeY / viewport.scaleY)
+			topLeft[0],
+			topLeft[1], 
+			bottomRight[0], 
+			bottomRight[1]
 		]
 
 We need to be able to work out if part of the visible region is outside what we've got buffered.
