@@ -21,10 +21,10 @@
       for x in [startX..bounds[2]] by gap
         for y in [startY..bounds[3]] by gap
           odd = (((x/50 + y/50).mod 2) is 0)
-          canvasContext.fillStyle = if odd then "white" else "black"
+          canvasContext.fillStyle = if odd then "white" else "AliceBlue"
           canvasContext.fillRect x, y, 50, 50
-          canvasContext.fillStyle = "red"
-          canvasContext.fillText "" + x + "," + y, x + 10, y + 10
+          canvasContext.fillStyle = "CornflowerBlue"
+          canvasContext.fillText "" + x + "," + y, x + 5, y + 28
 
     view = viewport()
 
