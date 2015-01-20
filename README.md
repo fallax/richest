@@ -39,3 +39,8 @@ a useful set of things to be able to get, from the point of view of code trying 
 - what's the bounds of the area in the virtual document?
 - what's the matrix transform I need to use when drawing to shift coordinates from the virtual space to the buffer?
 
+## GL text rendering
+
+http://delphic.me.uk/webgltext.html gives example code for rendering text in WebGL
+
+https://developer.mozilla.org/en-US/docs/Web/WebGL/Using_textures_in_WebGL explains how to use a DOM element's 2d data as texture in webgl
