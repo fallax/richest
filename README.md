@@ -44,3 +44,5 @@ a useful set of things to be able to get, from the point of view of code trying 
 http://delphic.me.uk/webgltext.html gives example code for rendering text in WebGL
 
 https://developer.mozilla.org/en-US/docs/Web/WebGL/Using_textures_in_WebGL explains how to use a DOM element's 2d data as texture in webgl
+
+http://www.html5rocks.com/en/tutorials/webgl/webgl_fundamentals/ - slightly more useful tutorial on loading textures, doing 2d webgl, etc
