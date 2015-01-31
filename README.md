@@ -1,6 +1,12 @@
 # richest
 A simple text editor for learning purposes
 
+## Other editors with code available to read
+
+https://github.com/capnmidnight/Primrose
+
+https://github.com/danielearwicker/carota
+
 ## Papers to read
 
 https://www.cs.unm.edu/~crowley/papers/sds.pdf
