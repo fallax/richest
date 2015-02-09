@@ -11,7 +11,7 @@ window.onload = main;
 
 var x =  0;
 var y = 0;
-var z = 0.01;
+var z = 0.002;
 var last = 0;
 
 var gl;
@@ -87,6 +87,8 @@ function tick() {
   }
 
   render();
+
+  window.requestAnimationFrame(tick);
 }
 
 function main() {
@@ -96,9 +98,6 @@ function main() {
   image.onload = function() {
     setup(image);
     tick();
-    setInterval(function () {
-      tick()
-    }, 100);
   }
 }
 
