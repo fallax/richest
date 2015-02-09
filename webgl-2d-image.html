@@ -11,31 +11,26 @@ window.onload = main;
 
 var x =  0;
 var y = 0;
+var z = 0.01;
+var last = 0;
+
 var gl;
 var texCoordBuffer;
+var vertexBuffer;
+var texture;
 
-function main() {
-  console.log("started");
-  var image = new Image();
-  image.src = "leaves.jpg";  // MUST BE SAME DOMAIN!!!
-  image.onload = function() {
-    console.log("image loaded");
-    setup(image);
-    render();
-    setInterval(function () {
-      console.log("frame!");
+var positionLocation;
+var texCoordLocation;
 
-      x += 0.01;
-      if (x > 1) { x = 0; }
+var bufferContext;
+var bufferCanvas;
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-      gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(getRect(x, 0/image.height, 100/image.width, 100/image.height)));
-      render();
+var sourceWidth = 100;
+var sourceHeight = 100;
 
-    }, 100);
-  }
-}
+var stuff = {};
 
+// Returns the triangle strip coordinates of a rectangle
 function getRect(x, y, width, height)
 {
   var x1 = x;
@@ -52,46 +47,10 @@ function getRect(x, y, width, height)
      x2, y2];
 }
 
-var positionLocation;
-var texCoordLocation;
-
-var stuff = {};
-function setup(image)
+// Given a texture, loads the pixels from a given HTML Canvas into it
+function writePixelsToTexture(sourceCanvas, targetTexture)
 {
-    // Get A WebGL context
-  var canvas = document.getElementById("canvas");
-  var bufferCanvas = document.getElementById("buffer");
-  var bufferContext = bufferCanvas.getContext("2d");
-
-  bufferContext.fillStyle = "black";
-  bufferContext.font = '40pt Arial';
-  bufferContext.fillText("fnord", 10, 50);
-
-  gl = getWebGLContext(canvas);
-  if (!gl) {
-    return;
-  }
-
-  // setup GLSL program
-  vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
-  fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader");
-  program = createProgram(gl, [vertexShader, fragmentShader]);
-  gl.useProgram(program);
-
-  // look up where the vertex data needs to go.
-  positionLocation = gl.getAttribLocation(program, "a_position");
-  texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-
-  // provide texture coordinates for the rectangle.
-  texCoordBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(getRect(0/image.width, 0/image.height, 100/image.width, 100/image.height)), gl.DYNAMIC_DRAW);
-  gl.enableVertexAttribArray(texCoordLocation);
-  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-  // Create a texture.
-  var texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
 
   // Set the parameters so we can render any size image.
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -100,7 +59,93 @@ function setup(image)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   // Upload the image into the texture.
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bufferCanvas);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
+}
+
+// Draws some test text onto an HTML canvas context
+function renderBuffer(context)
+{
+  // redraw the text
+  context.fillStyle = "white";
+  context.fillRect(0, 0, 300, 300);
+  context.fillStyle = "black";
+  context.font = '48pt Arial';
+  context.fillText(last, 10, 50);
+}
+
+function tick() {
+  // Move the viewport around
+  x += z;
+  if (x > 0.3 || x < 0) { z = -z; }
+
+  // Only actually update the graphics in the HTML canvas every second
+  if (last != (new Date()).getSeconds())
+  {
+    last = (new Date()).getSeconds();
+    renderBuffer(bufferContext);
+    writePixelsToTexture(bufferCanvas, texture);
+  }
+
+  render();
+}
+
+function main() {
+  console.log("started");
+  var image = new Image();
+  image.src = "leaves.jpg";  // MUST BE SAME DOMAIN!!!
+  image.onload = function() {
+    setup(image);
+    tick();
+    setInterval(function () {
+      tick()
+    }, 100);
+  }
+}
+
+function loadGLSL()
+{
+   // setup GLSL program
+  vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
+  fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader");
+  program = createProgram(gl, [vertexShader, fragmentShader]);
+  gl.useProgram(program);
+
+  // Get the attribute locations for the positions of triangles, and the texture coordinates mapped onto them.
+  positionLocation = gl.getAttribLocation(program, "a_position");
+  texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
+}
+
+function setup(image)
+{
+  // Get the GL context we're using.
+  var canvas = document.getElementById("canvas");
+  gl = getWebGLContext(canvas);
+  if (!gl) { return; }
+
+  // Get the 2D context we're using.
+  bufferCanvas = document.getElementById("buffer");
+  bufferContext = bufferCanvas.getContext("2d");
+
+  // Load in the GLSL code we need.
+  loadGLSL();
+
+  // Create a texture.
+  texture = gl.createTexture();
+  writePixelsToTexture(bufferCanvas, texture);
+
+  // provide texture coordinates for the rectangle.
+  texCoordBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(getRect(0, 0, 1, 1)), gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(texCoordLocation);
+  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // provide vertex coordinates for the rectangle.
+  vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(getRect(0, 0, 500, 500)), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(positionLocation);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
   // lookup uniforms
   var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
@@ -110,15 +155,11 @@ function setup(image)
 }
 
 function render() {
+  // Load in the texture coordiates data.
+  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(getRect(x, 0/sourceHeight, 100/sourceWidth, 100/sourceHeight)));
 
-  // Create a buffer for the position of the rectangle corners.
-  var buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(positionLocation);
-  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  // Set a rectangle the same size as the image.
-  setRectangle(gl, 0, 0, 500, 500);
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);  
 
   // Draw the rectangle.
   gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -126,10 +167,6 @@ function render() {
 
 function randomInt(range) {
   return Math.floor(Math.random() * range);
-}
-
-function setRectangle(gl, x, y, width, height) {
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(getRect(x, y, width, height)), gl.STATIC_DRAW);
 }
 
 </script>
